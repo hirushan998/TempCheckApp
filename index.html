@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Server Room Monitor</title>
+    <link rel="manifest" href="/manifest.json" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <meta name="theme-color" content="#3b82f6" />
+    <style>
+      /* Animation for alert icons */
+      .alert-icon {
+        animation: pulse 1s infinite;
+      }
+
+      /* Keyframes for pulsing animation */
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(1.2);
+          opacity: 0.7;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100">
+    <header class="bg-blue-600 p-4 text-white text-center">
+      <h1 class="text-2xl font-bold">Server Room Monitor</h1>
+    </header>
+
+    <main class="p-4 max-w-screen-lg mx-auto">
+      <!-- Real-time Data Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 mb-8">
+        <div class="bg-white rounded-lg p-4 shadow text-center">
+          <h2 class="text-lg font-semibold">Temperature</h2>
+          <p id="tempValue" class="text-3xl font-bold text-blue-600">- °C</p>
+        </div>
+        <div class="bg-white rounded-lg p-4 shadow text-center">
+          <h2 class="text-lg font-semibold">Humidity</h2>
+          <p id="humidityValue" class="text-3xl font-bold text-blue-600">- %</p>
+        </div>
+        <div class="bg-white rounded-lg p-4 shadow text-center">
+          <h2 class="text-lg font-semibold">Motion</h2>
+          <p id="motionValue" class="text-3xl font-bold text-blue-600">
+            <span id="motionIcon" class="inline-block">-</span>
+          </p>
+        </div>
+        <div class="bg-white rounded-lg p-4 shadow text-center">
+          <h2 class="text-lg font-semibold">Gas</h2>
+          <p id="gasValue" class="text-3xl font-bold text-blue-600">
+            <span id="gasIcon" class="inline-block">-</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Graph Section -->
+      <section class="bg-white rounded-lg p-6 shadow mb-8">
+        <h2 class="text-xl font-semibold mb-4">Real-Time Data Graphs</h2>
+        <div class="relative h-64 w-full">
+          <canvas id="chartContainer"></canvas>
+        </div>
+      </section>
+
+      <div
+        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 text-center mb-8"
+      >
+        <a
+          href="history.html"
+          class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          >View Historical Data</a
+        >
+        <a
+          href="raw-data.html"
+          class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+        >
+          Raw Data View
+        </a>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-blue-600 text-white p-4 text-center">
+      <p>&copy; 2024 Group B</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("/service-worker.js")
+            .then((registration) => {
+              console.log(
+                "ServiceWorker registration successful with scope: ",
+                registration.scope
+              );
+            })
+            .catch((error) => {
+              console.log("ServiceWorker registration failed: ", error);
+            });
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        function generateDummyData() {
+          return {
+            temperature: (Math.random() * 15 + 20).toFixed(1),
+            humidity: (Math.random() * 40 + 30).toFixed(1),
+            motion: Math.random() > 0.5 ? "Detected" : "None",
+            gas: Math.random() > 0.5 ? "Detected" : "None",
+          };
+        }
+
+        function updateDisplay(data) {
+          document.getElementById(
+            "tempValue"
+          ).textContent = `${data.temperature} °C`;
+          document.getElementById(
+            "humidityValue"
+          ).textContent = `${data.humidity} %`;
+
+          const motionElement = document.getElementById("motionIcon");
+          const gasElement = document.getElementById("gasIcon");
+
+          // Motion alert animation
+          if (data.motion === "Detected") {
+            motionElement.textContent = "⚠️";
+            motionElement.classList.add("alert-icon");
+          } else {
+            motionElement.textContent = "-";
+            motionElement.classList.remove("alert-icon");
+          }
+
+          // Gas alert animation
+          if (data.gas === "Detected") {
+            gasElement.textContent = "⚠️";
+            gasElement.classList.add("alert-icon");
+          } else {
+            gasElement.textContent = "-";
+            gasElement.classList.remove("alert-icon");
+          }
+        }
+
+        function updateChart(chart, data) {
+          chart.data.datasets[0].data.push(data.temperature);
+          chart.data.datasets[1].data.push(data.humidity);
+          chart.data.labels.push(new Date().toLocaleTimeString());
+          if (chart.data.labels.length > 20) chart.data.labels.shift(); // Keep last 20 entries
+          chart.update();
+        }
+
+        // Initialize the chart
+        const ctx = document.getElementById("chartContainer").getContext("2d");
+        const chart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: [],
+            datasets: [
+              {
+                label: "Temperature (°C)",
+                data: [],
+                borderColor: "#ff5733",
+                fill: false,
+              },
+              {
+                label: "Humidity (%)",
+                data: [],
+                borderColor: "#33c0ff",
+                fill: false,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: { title: { display: true, text: "Time" } },
+              y: { title: { display: true, text: "Value" } },
+            },
+          },
+        });
+
+        setInterval(() => {
+          const dummyData = generateDummyData();
+          updateDisplay(dummyData);
+          updateChart(chart, dummyData);
+        }, 5000);
+      });
+    </script>
+  </body>
+</html>
