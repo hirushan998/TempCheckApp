@@ -2,18 +2,18 @@
   "name": "Server Room Monitor",
   "short_name": "ServerMonitor",
   "description": "Real-time monitoring of server room conditions.",
-  "start_url": "/realtime/",
+  "start_url": "https://eloquent-cactus-989093.netlify.app/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#3b82f6",
   "icons": [
     {
-      "src": "/realtime/icons/logo-192x192.png",
+      "src": "https://eloquent-cactus-989093.netlify.app/icons/logo-192x192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/realtime/icons/logo-512x512.png",
+      "src": "https://eloquent-cactus-989093.netlify.app/icons/logo-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
