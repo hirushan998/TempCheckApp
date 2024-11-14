@@ -76,11 +76,17 @@
         <script src="js/main.js"></script>
         <script>
 
-            const temperatureData = [];
-            const humidityData = [];
-            const chartLabels = [];
+        const temperatureData = [];
+        const humidityData = [];
+        const chartLabels = [];
+        const batteryLevelElement = document.getElementById("battery-level");
+        const batteryPercentageElement = document.getElementById("battery-percentage");
 
         document.addEventListener("DOMContentLoaded", () => {
+
+            if (Notification.permission !== "granted") {
+                Notification.requestPermission();
+            }
 
             //Intialize Chart.js
             const ctx = document.getElementById("chartContainer").getContext("2d");
@@ -130,10 +136,12 @@
 
                         const motionElement = document.getElementById("motionIcon");
                         const gasElement = document.getElementById("gasIcon");
+                        let notifyMessage = '';
 
                         if (motion) {
                             motionElement.textContent = "⚠️";
                             motionElement.classList.add("alert-icon");
+                            notifyMessage += 'Motion detected! ';
                         } else {
                             motionElement.textContent = "";
                             motionElement.classList.remove("alert-icon");
@@ -142,9 +150,14 @@
                         if (gas >= 1) {
                             gasElement.textContent = "♨️";
                             gasElement.classList.add("alert-icon");
+                            notifyMessage += 'High gas levels detected!';
                         } else {
                             gasElement.textContent = "";
                             gasElement.classList.remove("alert-icon");
+                        }
+
+                        if (notifyMessage) {
+                            sendNotification(notifyMessage);
                         }
 
                         // Update chart data
@@ -161,7 +174,7 @@
                 chartLabels.push(new Date().toLocaleTimeString());
 
                 // Limit data to 20 points (latest 20 entries)
-                if (chartLabels.length > 20) {
+                if (chartLabels.length > 12) {
                     chartLabels.shift();
                     temperatureData.shift();
                     humidityData.shift();
@@ -169,8 +182,60 @@
                 chart.update();
             }
             
-            // Fetch data every 30 seconds
-            setInterval(fetchAndUpdateData, 3000);
+            function sendNotification(message) {
+            if (Notification.permission === "granted") {
+                new Notification("Alert", {
+                    body: message,
+                    icon: 'icons/favicon.png'  // Set an icon if available
+                });
+            }
+        }
+
+            function fetchBatteryPercent(){
+
+                const apiUrl = 'https://api.thingspeak.com/channels/2743318/feeds.json?api_key=JI2E3DB0FG7MR0LB&results=1';
+
+                fetch(apiUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        const { field1: voltage, field2: adc } = data.feeds[0];
+
+                        const minVoltage = 3.0;
+                        const maxVoltage = 4.2; 
+
+                        // Calculate battery percentage based on voltage
+                        let batteryPercentage = ((voltage - minVoltage) / (maxVoltage - minVoltage)) * 100;
+                        batteryPercentage = Math.min(Math.max(batteryPercentage, 0), 100); // Clamp between 0 and 100
+
+                        // Update battery indicator and percentage
+                        updateBatteryIndicator(batteryPercentage);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching data:', error);
+                    });
+            }
+
+            function updateBatteryIndicator(batteryPercentage) {
+                batteryLevelElement.style.width = `${batteryPercentage}%`;
+
+                batteryPercentageElement.textContent = `${batteryPercentage.toFixed(0)}%`;
+
+                // Optionally, add more styling or color changes based on battery level
+                if (batteryPercentage < 20) {
+                    batteryLevelElement.style.backgroundColor = "#e74c3c"; // Red color for low battery
+                } else if (batteryPercentage < 50) {
+                    batteryLevelElement.style.backgroundColor = "#f39c12"; // Yellow for medium battery
+                } else {
+                    batteryLevelElement.style.backgroundColor = "#2ecc71"; // Green for high battery
+                }
+            }
+
+            // Fetch data every 15 seconds
+            setInterval(() => {
+                fetchAndUpdateData();
+                fetchBatteryPercent();
+            }, 15000);
+
         });
         </script>
     </body>
