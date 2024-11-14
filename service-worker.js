@@ -1,4 +1,4 @@
-const CACHE_NAME = 'server-room-monitor-cache-v1';
+const CACHE_NAME = 'v1';
 const urlsToCache = [
   'https://eloquent-cactus-989093.netlify.app/',
   'https://eloquent-cactus-989093.netlify.app/index.html',
@@ -27,6 +27,20 @@ self.addEventListener('install', event => {
               });
           })
         );
+      })
+  );
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+      caches.keys().then((cacheNames) => {
+          return Promise.all(
+              cacheNames.map((cache) => {
+                  if (cache !== CACHE_NAME) {
+                      return caches.delete(cache);
+                  }
+              })
+          );
       })
   );
 });
