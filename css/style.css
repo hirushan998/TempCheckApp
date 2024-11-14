@@ -1,0 +1,44 @@
+.battery-indicator-container {
+  width: 100%;
+  background-color: #f1f5f9;
+  padding: 8px 0;
+}
+.battery-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding-right: 4px;
+  width: 50px;
+  height: 20px;
+  border: 2px solid #333;
+}
+.battery-level {
+  background-color: #34d399; 
+  width: 100%;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+.battery-tip {
+  position: absolute;
+  top: 2px;
+  right: -4px;
+  width: 4px;
+  height: 10px;
+  background-color: #333;
+  border-radius: 1px;
+}
+
+.alert-icon {
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+}

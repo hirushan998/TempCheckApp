@@ -1,171 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Historical Data - Server Room Monitor</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
-      rel="stylesheet"
-    />
-  </head>
-  <body class="bg-gray-100">
+    <link rel="shortcut icon" href="icons/favicon.png" type="image/x-icon" />
+    <link rel="manifest" href="manifest.json" />
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
+</head>
+<body class="bg-gray-100">
     <header class="bg-blue-600 p-4 text-white text-center">
-      <h1 class="text-2xl font-bold">Historical Data - Server Room Monitor</h1>
+        <h1 class="text-2xl font-bold">Historical Data - Server Room Monitor</h1>
     </header>
 
     <div class="text-center mt-4">
-      <a
-        href="index.html"
-        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-      >
-        Back to Home
-      </a>
+        <a href="index.html" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Back to Home</a>
     </div>
 
     <main class="p-6 max-w-screen-lg mx-auto">
-      <!-- Temperature Graph Section -->
-      <section class="bg-white rounded-lg p-6 shadow mb-8">
-        <h2 class="text-xl font-semibold mb-4">Temperature Data</h2>
-        <div class="relative h-64 w-full">
-          <canvas id="temperatureChart"></canvas>
-        </div>
-      </section>
+        <!-- Temperature Graph -->
+        <section class="bg-white rounded-lg p-6 shadow mb-8">
+            <h2 class="text-xl font-semibold mb-4">Temperature Data</h2>
+            <div class="relative h-64 w-full">
+                <canvas id="temperatureChart"></canvas>
+            </div>
+        </section>
 
-      <!-- Humidity Graph Section -->
-      <section class="bg-white rounded-lg p-6 shadow mb-8">
-        <h2 class="text-xl font-semibold mb-4">Humidity Data</h2>
-        <div class="relative h-64 w-full">
-          <canvas id="humidityChart"></canvas>
-        </div>
-      </section>
+        <!-- Humidity Graph -->
+        <section class="bg-white rounded-lg p-6 shadow mb-8">
+            <h2 class="text-xl font-semibold mb-4">Humidity Data</h2>
+            <div class="relative h-64 w-full">
+                <canvas id="humidityChart"></canvas>
+            </div>
+        </section>
 
-      <!-- Gas Graph Section -->
-      <section class="bg-white rounded-lg p-6 shadow mb-8">
-        <h2 class="text-xl font-semibold mb-4">Gas Data</h2>
-        <div class="relative h-64 w-full">
-          <canvas id="gasChart"></canvas>
-        </div>
-      </section>
+        <!-- Gas Graph -->
+        <section class="bg-white rounded-lg p-6 shadow mb-8">
+            <h2 class="text-xl font-semibold mb-4">Gas Data</h2>
+            <div class="relative h-64 w-full">
+                <canvas id="gasChart"></canvas>
+            </div>
+        </section>
     </main>
 
     <footer class="bg-blue-600 text-white p-4 text-center">
-      <p>&copy; 2024 Group B</p>
+        <p>&copy; 2024 IOT Assignment | Group A</p>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        const tempData = [22, 23, 24, 22, 21, 23, 25, 24, 23, 24, 26, 27];
-        const humidityData = [55, 56, 54, 53, 55, 57, 58, 56, 57, 59, 60, 58];
-        const gasData = [30, 32, 31, 29, 28, 30, 33, 34, 31, 29, 30, 32];
-        const labels = [
-          "12:00",
-          "12:10",
-          "12:20",
-          "12:30",
-          "12:40",
-          "12:50",
-          "13:00",
-          "13:10",
-          "13:20",
-          "13:30",
-          "13:40",
-          "13:50",
-        ];
+        document.addEventListener("DOMContentLoaded", async () => {
+            const apiUrl = "https://api.thingspeak.com/channels/2733531/feeds.json?api_key=EOLMMSM5C3LP7VA1";
 
-        const chartOptions = {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: { title: { display: true, text: "Time" } },
-            y: { beginAtZero: true, title: { display: true } },
-          },
-        };
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                const feeds = data.feeds;
 
-        // Temperature Chart
-        const tempCtx = document
-          .getElementById("temperatureChart")
-          .getContext("2d");
-        new Chart(tempCtx, {
-          type: "line",
-          data: {
-            labels: labels,
-            datasets: [
-              {
-                label: "Temperature (°C)",
-                data: tempData,
-                borderColor: "#ff5733",
-                backgroundColor: "rgba(255, 87, 51, 0.2)",
-                fill: true,
-              },
-            ],
-          },
-          options: {
-            ...chartOptions,
-            scales: {
-              ...chartOptions.scales,
-              y: {
-                ...chartOptions.scales.y,
-                title: { text: "Temperature (°C)" },
-              },
-            },
-          },
+                const labels = feeds.map(feed => new Date(feed.created_at).toLocaleTimeString());
+                const tempData = feeds.map(feed => parseFloat(feed.field1).toFixed(0));
+                const humidityData = feeds.map(feed => parseFloat(feed.field2).toFixed(0));
+                const gasData = feeds.map(feed => parseFloat(feed.field4).toFixed(3));
+
+                const chartOptions = {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { title: { display: true, text: "Time" } },
+                        y: { beginAtZero: true, title: { display: true } },
+                    },
+                };
+
+                // Temperature Chart
+                const tempCtx = document.getElementById("temperatureChart").getContext("2d");
+                new Chart(tempCtx, {
+                    type: "line",
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: "Temperature (°C)",
+                            data: tempData,
+                            borderColor: "#ff5733",
+                            backgroundColor: "rgba(255, 87, 51, 0.2)",
+                            fill: true,
+                        }],
+                    },
+                    options: {
+                        ...chartOptions,
+                        scales: {
+                            ...chartOptions.scales,
+                            y: { ...chartOptions.scales.y, title: { text: "Temperature (°C)" } },
+                        },
+                    },
+                });
+
+                // Humidity Chart
+                const humidityCtx = document.getElementById("humidityChart").getContext("2d");
+                new Chart(humidityCtx, {
+                    type: "line",
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: "Humidity (%)",
+                            data: humidityData,
+                            borderColor: "#33c0ff",
+                            backgroundColor: "rgba(51, 192, 255, 0.2)",
+                            fill: true,
+                        }],
+                    },
+                    options: {
+                        ...chartOptions,
+                        scales: {
+                            ...chartOptions.scales,
+                            y: { ...chartOptions.scales.y, title: { text: "Humidity (%)" } },
+                        },
+                    },
+                });
+
+                // Gas Chart
+                const gasCtx = document.getElementById("gasChart").getContext("2d");
+                new Chart(gasCtx, {
+                    type: "line",
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: "Gas (ppm)",
+                            data: gasData,
+                            borderColor: "#82e0aa",
+                            backgroundColor: "rgba(130, 224, 170, 0.2)",
+                            fill: true,
+                        }],
+                    },
+                    options: {
+                        ...chartOptions,
+                        scales: {
+                            ...chartOptions.scales,
+                            y: { ...chartOptions.scales.y, title: { text: "Gas (ppm)" } },
+                        },
+                    },
+                });
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
         });
-
-        // Humidity Chart
-        const humidityCtx = document
-          .getElementById("humidityChart")
-          .getContext("2d");
-        new Chart(humidityCtx, {
-          type: "line",
-          data: {
-            labels: labels,
-            datasets: [
-              {
-                label: "Humidity (%)",
-                data: humidityData,
-                borderColor: "#33c0ff",
-                backgroundColor: "rgba(51, 192, 255, 0.2)",
-                fill: true,
-              },
-            ],
-          },
-          options: {
-            ...chartOptions,
-            scales: {
-              ...chartOptions.scales,
-              y: { ...chartOptions.scales.y, title: { text: "Humidity (%)" } },
-            },
-          },
-        });
-
-        // Gas Chart
-        const gasCtx = document.getElementById("gasChart").getContext("2d");
-        new Chart(gasCtx, {
-          type: "line",
-          data: {
-            labels: labels,
-            datasets: [
-              {
-                label: "Gas (ppm)",
-                data: gasData,
-                borderColor: "#82e0aa",
-                backgroundColor: "rgba(130, 224, 170, 0.2)",
-                fill: true,
-              },
-            ],
-          },
-          options: {
-            ...chartOptions,
-            scales: {
-              ...chartOptions.scales,
-              y: { ...chartOptions.scales.y, title: { text: "Gas (ppm)" } },
-            },
-          },
-        });
-      });
     </script>
-  </body>
+</body>
 </html>

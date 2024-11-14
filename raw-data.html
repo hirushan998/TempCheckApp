@@ -4,10 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Raw Data - Server Room Monitor</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
-      rel="stylesheet"
-    />
+    <link rel="shortcut icon" href="icons/favicon.png" type="image/x-icon" />
+    <link rel="manifest" href="manifest.json" />
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   </head>
   <body class="bg-gray-100">
     <header class="bg-blue-600 p-4 text-white text-center">
@@ -15,12 +14,7 @@
     </header>
 
     <div class="text-center mt-4">
-      <a
-        href="index.html"
-        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-      >
-        Back to Home
-      </a>
+      <a href="index.html" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Back to Home</a>
     </div>
 
     <main class="p-6 max-w-screen-lg mx-auto">
@@ -29,9 +23,7 @@
         <div class="overflow-x-auto">
           <table class="min-w-full bg-white border border-gray-300">
             <thead>
-              <tr
-                class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal"
-              >
+              <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
                 <th class="py-3 px-6 text-left">Timestamp</th>
                 <th class="py-3 px-6 text-left">Temperature (°C)</th>
                 <th class="py-3 px-6 text-left">Humidity (%)</th>
@@ -39,64 +31,74 @@
                 <th class="py-3 px-6 text-left">Gas (ppm)</th>
               </tr>
             </thead>
-            <tbody id="rawDataTable">
-              <tr>
-                <td class="py-3 px-6 border-b border-gray-300">12:00</td>
-                <td class="py-3 px-6 border-b border-gray-300">22</td>
-                <td class="py-3 px-6 border-b border-gray-300">55</td>
-                <td class="py-3 px-6 border-b border-gray-300">Detected</td>
-                <td class="py-3 px-6 border-b border-gray-300">30</td>
-              </tr>
-            </tbody>
+            <tbody id="rawDataTable"></tbody>
           </table>
+          <div class="flex justify-center mt-4">
+            <button id="prevPage" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">Previous</button>
+            <button id="nextPage" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Next</button>
+          </div>
         </div>
       </section>
     </main>
 
     <footer class="bg-blue-600 text-white p-4 text-center">
-      <p>&copy; 2024 Server Room Monitor</p>
+      <p>&copy; 2024 IOT Assignment | Group A</p>
     </footer>
 
     <script>
       document.addEventListener("DOMContentLoaded", () => {
-        const rawData = [
-          {
-            timestamp: "12:10",
-            temperature: 23,
-            humidity: 54,
-            motion: "No Motion",
-            gas: 32,
-          },
-          {
-            timestamp: "12:20",
-            temperature: 24,
-            humidity: 56,
-            motion: "Detected",
-            gas: 29,
-          },
-          {
-            timestamp: "12:30",
-            temperature: 22,
-            humidity: 55,
-            motion: "No Motion",
-            gas: 30,
-          },
-        ];
+        const apiUrl = "https://api.thingspeak.com/channels/2733531/feeds.json?api_key=EOLMMSM5C3LP7VA1";
+        const rowsPerPage = 10;
+        let currentPage = 1;
+        let feeds = [];
 
-        const rawDataTable = document.getElementById("rawDataTable");
-        rawDataTable.innerHTML = "";
+        async function fetchData() {
+          try {
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+            feeds = data.feeds.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            displayPage(currentPage);
+          } catch (error) {
+            console.error("Error fetching data:", error);
+          }
+        }
 
-        rawData.forEach((data) => {
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td class="py-3 px-6 border-b border-gray-300">${data.timestamp}</td>
-            <td class="py-3 px-6 border-b border-gray-300">${data.temperature}</td>
-            <td class="py-3 px-6 border-b border-gray-300">${data.humidity}</td>
-            <td class="py-3 px-6 border-b border-gray-300">${data.motion}</td>
-            <td class="py-3 px-6 border-b border-gray-300">${data.gas}</td>
-          `;
-          rawDataTable.appendChild(row);
+        function displayPage(page) {
+          const start = (page - 1) * rowsPerPage;
+          const end = start + rowsPerPage;
+          const paginatedData = feeds.slice(start, end);
+          const rawDataTable = document.getElementById("rawDataTable");
+
+          rawDataTable.innerHTML = paginatedData
+            .map(feed => `
+              <tr>
+                <td class="py-3 px-6 border-b border-gray-300">${new Date(feed.created_at).toLocaleString()}</td>
+                <td class="py-3 px-6 border-b border-gray-300">${parseFloat(feed.field1).toFixed(0)}</td>
+                <td class="py-3 px-6 border-b border-gray-300">${parseFloat(feed.field2).toFixed(0)}</td>
+                <td class="py-3 px-6 border-b border-gray-300">${feed.field3 === "1" ? "Detected" : "No Motion"}</td>
+                <td class="py-3 px-6 border-b border-gray-300">${parseFloat(feed.field4).toFixed(3)}</td>
+              </tr>
+            `).join("");
+
+          document.getElementById("prevPage").disabled = page === 1;
+          document.getElementById("nextPage").disabled = end >= feeds.length;
+        }
+
+        document.getElementById("prevPage").addEventListener("click", () => {
+          if (currentPage > 1) {
+            currentPage--;
+            displayPage(currentPage);
+          }
         });
+
+        document.getElementById("nextPage").addEventListener("click", () => {
+          if ((currentPage * rowsPerPage) < feeds.length) {
+            currentPage++;
+            displayPage(currentPage);
+          }
+        });
+
+        fetchData();
       });
     </script>
   </body>
