@@ -2,7 +2,7 @@
   "name": "Server Room Monitor",
   "short_name": "ServerMonitor",
   "description": "Real-time monitoring of server room conditions.",
-  "start_url": "/realtime/",
+  "start_url": "https://eloquent-cactus-989093.netlify.app/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#3b82f6",
