@@ -230,6 +230,9 @@
                 }
             }
 
+            fetchAndUpdateData();
+            fetchBatteryPercent();
+
             // Fetch data every 15 seconds
             setInterval(() => {
                 fetchAndUpdateData();
