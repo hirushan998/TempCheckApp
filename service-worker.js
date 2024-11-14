@@ -1,12 +1,12 @@
 const CACHE_NAME = 'v1';
 const urlsToCache = [
-  'https://eloquent-cactus-989093.netlify.app/',
-  'https://eloquent-cactus-989093.netlify.app/index.html',
-  'https://eloquent-cactus-989093.netlify.app/history.html',
-  'https://eloquent-cactus-989093.netlify.app/raw-data.html',
-  'https://eloquent-cactus-989093.netlify.app/manifest.json',
-  'https://eloquent-cactus-989093.netlify.app/icons/logo-192x192.png',
-  'https://eloquent-cactus-989093.netlify.app/icons/logo-512x512.png'
+  'https://server-room-temp-monitor.netlify.app/',
+  'https://server-room-temp-monitor.netlify.app/index.html',
+  'https://server-room-temp-monitor.netlify.app/history.html',
+  'https://server-room-temp-monitor.netlify.app/raw-data.html',
+  'https://server-room-temp-monitor.netlify.app/manifest.json',
+  'https://server-room-temp-monitor.netlify.app/icons/logo-192x192.png',
+  'https://server-room-temp-monitor.netlify.app/icons/logo-512x512.png'
 ];
 
 self.addEventListener('install', event => {
