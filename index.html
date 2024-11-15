@@ -14,8 +14,19 @@
         <meta name="theme-color" content="#3b82f6" />
     </head>
     <body class="bg-gray-100">
+
+        <!-- Install Popup -->
+        <div id="installPopup">
+            <p class="mb-4">Install this app for a better experience!</p>
+            <div class="flex justify-end">
+                <button id="installBtn">Install</button>
+                <button id="dismissBtn" class="ml-2 text-gray-600">Dismiss</button>
+            </div>
+        </div>
+
         <!-- Battery -->
         <div class="battery-indicator-container flex justify-end items-center pr-4 bg-gray-100">
+            <span class="mr-3 font-semibold">Battery</span>
             <div class="battery-icon">
                 <div id="battery-level" class="battery-level h-full"></div>
                 <div class="battery-tip"></div>
@@ -82,8 +93,6 @@
         const temperatureData = [];
         const humidityData = [];
         const chartLabels = [];
-        const batteryLevelElement = document.getElementById("battery-level");
-        const batteryPercentageElement = document.getElementById("battery-percentage");
 
         document.addEventListener("DOMContentLoaded", () => {
 
@@ -189,7 +198,7 @@
             if (Notification.permission === "granted") {
                 new Notification("Alert", {
                     body: message,
-                    icon: 'icons/favicon.png'  // Set an icon if available
+                    icon: 'icons/favicon.png'
                 });
             }
         }
