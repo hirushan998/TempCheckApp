@@ -59,14 +59,20 @@
             <!-- Real-time Data Cards -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 mb-8">
 
-                <div class="bg-white rounded-lg p-4 shadow text-center">
-                    <h2 class="text-lg font-semibold">Temperature</h2>
-                    <p id="tempValue" class="text-3xl font-bold text-blue-600">- °C</p>
+                <div class="bg-white rounded-lg p-6 shadow">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-semibold">Temperature</h2>
+                        <span id="tempStatus" class="text-green-500 font-bold">Normal</span>
+                    </div>
+                    <p id="tempValue" class="text-4xl font-bold text-blue-600 mt-2">- °C</p>
                 </div>
 
-                <div class="bg-white rounded-lg p-4 shadow text-center">
-                    <h2 class="text-lg font-semibold">Humidity</h2>
-                    <p id="humidityValue" class="text-3xl font-bold text-blue-600">- %</p>
+                <div class="bg-white rounded-lg p-6 shadow">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-semibold">Humidity</h2>
+                        <span id="humidityStatus" class="text-green-500 font-bold">Normal</span>
+                    </div>
+                    <p id="humidityValue" class="text-4xl font-bold text-blue-600 mt-2">- %</p>
                 </div>
 
                 <div class="bg-white rounded-lg p-4 shadow text-center">
@@ -81,8 +87,19 @@
                         <span id="gasIcon" class="inline-block"></span>
                     </p>
                 </div>
-
             </div>
+
+            <!-- Averages Section -->
+            <section class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                <div class="bg-gray-100 rounded-lg p-4 shadow text-center">
+                    <h3 class="text-md font-medium text-gray-700">Average Temperature</h3>
+                    <p id="avgTempValue" class="text-2xl font-semibold text-green-600">- °C</p>
+                </div>
+                <div class="bg-gray-100 rounded-lg p-4 shadow text-center">
+                    <h3 class="text-md font-medium text-gray-700">Average Humidity</h3>
+                    <p id="avgHumidityValue" class="text-2xl font-semibold text-green-600">- %</p>
+                </div>
+            </section>
 
             <!-- Graph -->
             <section class="bg-white rounded-lg p-6 shadow mb-8">
@@ -110,6 +127,49 @@
         const temperatureData = [];
         const humidityData = [];
         const chartLabels = [];
+
+        function updateStatus({ temperature, humidity }) {
+            const tempStatus = document.getElementById("tempStatus");
+            const humidityStatus = document.getElementById("humidityStatus");
+
+            if (temperature > 35) {
+                tempStatus.textContent = "Critical";
+                tempStatus.className = "text-red-500 font-bold";
+            } else if (temperature > 30) {
+                tempStatus.textContent = "Warning";
+                tempStatus.className = "text-yellow-500 font-bold";
+            } else {
+                tempStatus.textContent = "Normal";
+                tempStatus.className = "text-green-500 font-bold";
+            }
+
+            if (humidity > 80) {
+                humidityStatus.textContent = "Critical";
+                humidityStatus.className = "text-red-500 font-bold";
+            } else if (humidity > 60) {
+                humidityStatus.textContent = "Warning";
+                humidityStatus.className = "text-yellow-500 font-bold";
+            } else {
+                humidityStatus.textContent = "Normal";
+                humidityStatus.className = "text-green-500 font-bold";
+            }
+        }
+
+        function updateAverages() {
+            const avgTemp = (
+                temperatureData.reduce((sum, value) => sum + value, 0) /
+                temperatureData.length
+            ).toFixed(1);
+
+            const avgHumidity = (
+                humidityData.reduce((sum, value) => sum + value, 0) /
+                humidityData.length
+            ).toFixed(1);
+
+            document.getElementById("avgTempValue").textContent = `${avgTemp} °C`;
+            document.getElementById("avgHumidityValue").textContent = `${avgHumidity} %`;
+        }
+
 
         document.addEventListener("DOMContentLoaded", () => {
 
@@ -162,6 +222,18 @@
                         // Update displayed values
                         document.getElementById('tempValue').textContent = `${roundedTemperature} °C`;
                         document.getElementById('humidityValue').textContent = `${roundedHumidity} %`;
+
+                        // Update Status
+                        updateStatus({ temperature: roundedTemperature, humidity: roundedHumidity });
+
+                        temperatureData.push(parseFloat(temperature));
+                        humidityData.push(parseFloat(humidity));
+                        if (temperatureData.length > 12) {
+                            temperatureData.shift();
+                            humidityData.shift();
+                        }
+                        updateAverages();
+
 
                         const motionElement = document.getElementById("motionIcon");
                         const gasElement = document.getElementById("gasIcon");
@@ -218,7 +290,7 @@
                         icon: "icons/favicon.png",
                     });
                 } else {
-                    alert(message); // Fallback for unsupported devices
+                    // alert(message); // Fallback for unsupported devices
                 }
             }
 
