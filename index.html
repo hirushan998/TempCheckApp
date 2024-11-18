@@ -171,7 +171,49 @@
         }
 
 
+        function fetchDailyAverageWithTimestamp() {
+    const today = new Date();
+    const currentDateString = today.toISOString().split("T")[0]; // Format: YYYY-MM-DD
+
+    const apiUrl = "https://api.thingspeak.com/channels/2733531/feeds.json?api_key=EOLMMSM5C3LP7VA1";
+
+    fetch(apiUrl)
+        .then((response) => response.json())
+        .then((data) => {
+            const feeds = data.feeds || [];
+            let totalField1 = 0;
+            let totalField2 = 0;
+            let countField1 = 0;
+            let countField2 = 0;
+
+            feeds.forEach((entry) => {
+                const entryDate = entry.created_at.split("T")[0]; // Extract date portion
+                if (entryDate === currentDateString) {
+                    if (entry.field1) {
+                        totalField1 += parseFloat(entry.field1);
+                        countField1++;
+                    }
+                    if (entry.field2) {
+                        totalField2 += parseFloat(entry.field2);
+                        countField2++;
+                    }
+                }
+            });
+
+            const avgField1 = countField1 > 0 ? (totalField1 / countField1).toFixed(2) : "0";
+            const avgField2 = countField2 > 0 ? (totalField2 / countField2).toFixed(2) : "0";
+
+            document.getElementById("avgTempValue").textContent = `${avgField1} °C`;
+            document.getElementById("avgHumidityValue").textContent = `${avgField2} %`;
+        })
+        .catch((error) => console.error("Error fetching daily average data:", error));
+}
+
+
         document.addEventListener("DOMContentLoaded", () => {
+
+            fetchDailyAverageWithTimestamp();
+
 
             if ("Notification" in window && Notification.permission !== "granted") {
                 Notification.requestPermission().catch((error) => console.error("Notification permission error:", error));
@@ -222,17 +264,6 @@
                         // Update displayed values
                         document.getElementById('tempValue').textContent = `${roundedTemperature} °C`;
                         document.getElementById('humidityValue').textContent = `${roundedHumidity} %`;
-
-                        // Update Status
-                        updateStatus({ temperature: roundedTemperature, humidity: roundedHumidity });
-
-                        temperatureData.push(parseFloat(temperature));
-                        humidityData.push(parseFloat(humidity));
-                        if (temperatureData.length > 12) {
-                            temperatureData.shift();
-                            humidityData.shift();
-                        }
-                        updateAverages();
 
 
                         const motionElement = document.getElementById("motionIcon");
