@@ -42,7 +42,7 @@
         </div>
 
         <!-- Battery -->
-        <div class="battery-indicator-container flex justify-end items-center pr-4 bg-gray-100">
+        <div class="battery-indicator-container flex justify-center items-center pr-4 bg-gray-100">
             <span class="mr-3 font-semibold">Battery</span>
             <div class="battery-icon">
                 <div id="battery-level" class="battery-level h-full"></div>
@@ -82,7 +82,7 @@
                     </p>
                 </div>
                 <div class="bg-white rounded-lg p-4 shadow text-center">
-                    <h2 class="text-lg font-semibold">Gas</h2>
+                    <h2 class="text-lg font-semibold">Smoke</h2>
                     <p id="gasValue" class="text-3xl font-bold text-blue-600">
                         <span id="gasIcon" class="inline-block"></span>
                     </p>
@@ -166,48 +166,67 @@
                 humidityData.length
             ).toFixed(1);
 
-            document.getElementById("avgTempValue").textContent = `${avgTemp} °C`;
-            document.getElementById("avgHumidityValue").textContent = `${avgHumidity} %`;
+            // document.getElementById("avgTempValue").textContent = `${avgTemp} °C`;
+            // document.getElementById("avgHumidityValue").textContent = `${avgHumidity} %`;
         }
 
 
         function fetchDailyAverageWithTimestamp() {
-    const today = new Date();
-    const currentDateString = today.toISOString().split("T")[0]; // Format: YYYY-MM-DD
+            const today = new Date();
+            const currentDateString = today.toISOString().split("T")[0]; // Format: YYYY-MM-DD
 
-    const apiUrl = "https://api.thingspeak.com/channels/2733531/feeds.json?api_key=EOLMMSM5C3LP7VA1";
+            const apiUrl = "https://api.thingspeak.com/channels/2733531/feeds.json?api_key=EOLMMSM5C3LP7VA1";
 
-    fetch(apiUrl)
-        .then((response) => response.json())
-        .then((data) => {
-            const feeds = data.feeds || [];
-            let totalField1 = 0;
-            let totalField2 = 0;
-            let countField1 = 0;
-            let countField2 = 0;
+            fetch(apiUrl)
+                .then((response) => response.json())
+                .then((data) => {
+                    const feeds = data.feeds || [];
+                    const temperatures = [];
+                    const humidities = [];
 
-            feeds.forEach((entry) => {
-                const entryDate = entry.created_at.split("T")[0]; // Extract date portion
-                if (entryDate === currentDateString) {
-                    if (entry.field1) {
-                        totalField1 += parseFloat(entry.field1);
-                        countField1++;
-                    }
-                    if (entry.field2) {
-                        totalField2 += parseFloat(entry.field2);
-                        countField2++;
-                    }
-                }
-            });
+                    // Collect today's valid temperature and humidity readings
+                    feeds.forEach((entry) => {
+                        const entryDate = entry.created_at.split("T")[0]; // Extract date portion
+                        if (entryDate === currentDateString) {
+                            if (entry.field1 && !isNaN(parseFloat(entry.field1))) {
+                                temperatures.push(parseFloat(entry.field1));
+                            }
+                            if (entry.field2 && !isNaN(parseFloat(entry.field2))) {
+                                humidities.push(parseFloat(entry.field2));
+                            }
+                        }
+                    });
 
-            const avgField1 = countField1 > 0 ? (totalField1 / countField1).toFixed(2) : "0";
-            const avgField2 = countField2 > 0 ? (totalField2 / countField2).toFixed(2) : "0";
+                    // Apply moving average filter
+                    const smoothedTemperatures = applyMovingAverage(temperatures, 3); // 3-day window
+                    const smoothedHumidities = applyMovingAverage(humidities, 3); // 3-day window
 
-            document.getElementById("avgTempValue").textContent = `${avgField1} °C`;
-            document.getElementById("avgHumidityValue").textContent = `${avgField2} %`;
-        })
-        .catch((error) => console.error("Error fetching daily average data:", error));
-}
+                    // Calculate final average for smoothed data
+                    const avgTemp = smoothedTemperatures.length > 0
+                        ? (smoothedTemperatures.reduce((a, b) => a + b, 0) / smoothedTemperatures.length).toFixed(2)
+                        : "0";
+                    const avgHumidity = smoothedHumidities.length > 0
+                        ? (smoothedHumidities.reduce((a, b) => a + b, 0) / smoothedHumidities.length).toFixed(2)
+                        : "0";
+
+                    // Update the UI
+                    document.getElementById("avgTempValue").textContent = `${avgTemp} °C`;
+                    document.getElementById("avgHumidityValue").textContent = `${avgHumidity} %`;
+                })
+                .catch((error) => console.error("Error fetching daily average data:", error));
+        }
+
+        // Function to calculate moving average
+        function applyMovingAverage(data, windowSize) {
+            const result = [];
+            for (let i = 0; i <= data.length - windowSize; i++) {
+                const window = data.slice(i, i + windowSize); // Extract sliding window
+                const average = window.reduce((a, b) => a + b, 0) / windowSize; // Calculate window average
+                result.push(average);
+            }
+            return result;
+        }
+
 
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -325,52 +344,11 @@
                 }
             }
 
-            function fetchBatteryPercent(){
-
-                const apiUrl = 'https://api.thingspeak.com/channels/2743318/feeds.json?api_key=JI2E3DB0FG7MR0LB&results=1';
-
-                fetch(apiUrl)
-                    .then(response => response.json())
-                    .then(data => {
-                        const { field1: voltage, field2: adc } = data.feeds[0];
-
-                        const minVoltage = 3.0;
-                        const maxVoltage = 4.2; 
-
-                        // Calculate battery percentage based on voltage
-                        let batteryPercentage = ((voltage - minVoltage) / (maxVoltage - minVoltage)) * 100;
-                        batteryPercentage = Math.min(Math.max(batteryPercentage, 0), 100); // Clamp between 0 and 100
-
-                        // Update battery indicator and percentage
-                        updateBatteryIndicator(batteryPercentage);
-                    })
-                    .catch(error => {
-                        console.error('Error fetching data:', error);
-                    });
-            }
-
-            function updateBatteryIndicator(batteryPercentage) {
-                batteryLevelElement.style.width = `${batteryPercentage}%`;
-
-                batteryPercentageElement.textContent = `${batteryPercentage.toFixed(0)}%`;
-
-                // Optionally, add more styling or color changes based on battery level
-                if (batteryPercentage < 20) {
-                    batteryLevelElement.style.backgroundColor = "#e74c3c"; // Red color for low battery
-                } else if (batteryPercentage < 50) {
-                    batteryLevelElement.style.backgroundColor = "#f39c12"; // Yellow for medium battery
-                } else {
-                    batteryLevelElement.style.backgroundColor = "#2ecc71"; // Green for high battery
-                }
-            }
-
             fetchAndUpdateData();
-            fetchBatteryPercent();
 
             // Fetch data every 15 seconds
             setInterval(() => {
                 fetchAndUpdateData();
-                fetchBatteryPercent();
             }, 15000);
 
         });

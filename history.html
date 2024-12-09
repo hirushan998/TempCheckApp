@@ -46,7 +46,7 @@
     </div>
 
     <!-- Battery -->
-    <div class="battery-indicator-container flex justify-end items-center pr-4 bg-gray-100">
+    <div class="battery-indicator-container flex justify-center items-center pr-4 bg-gray-100">
         <span class="mr-3 font-semibold">Battery</span>
         <div class="battery-icon">
             <div id="battery-level" class="battery-level h-full"></div>
@@ -86,10 +86,20 @@
 
         <!-- Gas Graph -->
         <section class="bg-white rounded-lg p-6 shadow mb-8">
-            <h2 class="text-xl font-semibold mb-4">Gas Data</h2>
+            <h2 class="text-xl font-semibold mb-4">Smoke Data</h2>
             <div class="overflow-x-auto">
                 <div class="relative h-64 w-full">
                     <canvas id="gasChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Motion Graph -->
+        <section class="bg-white rounded-lg p-6 shadow mb-8">
+            <h2 class="text-xl font-semibold mb-4">Motion Data</h2>
+            <div class="overflow-x-auto">
+                <div class="relative h-64 w-full">
+                    <canvas id="motionChart"></canvas>
                 </div>
             </div>
         </section>
@@ -113,6 +123,7 @@
                 const labels = feeds.map(feed => new Date(feed.created_at).toLocaleTimeString());
                 const tempData = feeds.map(feed => parseFloat(feed.field1).toFixed(0));
                 const humidityData = feeds.map(feed => parseFloat(feed.field2).toFixed(0));
+                const motionData = feeds.map(feed => parseFloat(feed.field3).toFixed(0));
                 const gasData = feeds.map(feed => parseFloat(feed.field4).toFixed(3));
 
                 const chartOptions = {
@@ -177,10 +188,33 @@
                     data: {
                         labels: labels,
                         datasets: [{
-                            label: "Gas (ppm)",
+                            label: "Smoke",
                             data: gasData,
                             borderColor: "#82e0aa",
                             backgroundColor: "rgba(130, 224, 170, 0.2)",
+                            fill: true,
+                        }],
+                    },
+                    options: {
+                        ...chartOptions,
+                        scales: {
+                            ...chartOptions.scales,
+                            y: { ...chartOptions.scales.y, title: { text: "Gas (ppm)" } },
+                        },
+                    },
+                });
+
+                //Motion Chart
+                const motionCtx = document.getElementById("motionChart").getContext("2d");
+                new Chart(motionCtx, {
+                    type: "line",
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: "Motion",
+                            data: motionData,
+                            borderColor: "#800080",
+                            backgroundColor: "rgba(128, 0, 128, 0.2)",
                             fill: true,
                         }],
                     },

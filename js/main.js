@@ -1,10 +1,10 @@
 let deferredPrompt;
 
-window.addEventListener("beforeinstallprompt", (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    document.getElementById("installPopup").style.display = "block";
-});
+// window.addEventListener("beforeinstallprompt", (e) => {
+//     e.preventDefault();
+//     deferredPrompt = e;
+//     document.getElementById("installPopup").style.display = "block";
+// });
 
 document.getElementById("installBtn").addEventListener("click", () => {
     if (deferredPrompt) {
@@ -42,19 +42,16 @@ const batteryPercentageElement = document.getElementById("battery-percentage");
 
 function fetchBatteryPercent(){
 
-    const apiUrl = 'https://api.thingspeak.com/channels/2743318/feeds.json?api_key=JI2E3DB0FG7MR0LB&results=1';
+    const apiUrl = 'https://api.thingspeak.com/channels/2733531/fields/6.json?api_key=EOLMMSM5C3LP7VA1&sort=desc&results=1';
 
     fetch(apiUrl)
         .then(response => response.json())
         .then(data => {
-            const { field1: voltage, field2: adc } = data.feeds[0];
+            const { field6: percent } = data.feeds[0];
 
-            const minVoltage = 3.0;
-            const maxVoltage = 4.2; 
-
-            // Calculate battery percentage based on voltage
-            let batteryPercentage = ((voltage - minVoltage) / (maxVoltage - minVoltage)) * 100;
-            batteryPercentage = Math.min(Math.max(batteryPercentage, 0), 100); // Clamp between 0 and 100
+            // // Calculate battery percentage based on voltage
+            let batteryPercentage = percent;
+            batteryPercentage = Math.min(Math.max(batteryPercentage, 0), 100);
 
             // Update battery indicator and percentage
             updateBatteryIndicator(batteryPercentage);
@@ -66,7 +63,6 @@ function fetchBatteryPercent(){
 
 function updateBatteryIndicator(batteryPercentage) {
     batteryLevelElement.style.width = `${batteryPercentage}%`;
-
     batteryPercentageElement.textContent = `${batteryPercentage.toFixed(0)}%`;
 
     // Optionally, add more styling or color changes based on battery level
